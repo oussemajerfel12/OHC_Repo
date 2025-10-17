@@ -9,10 +9,10 @@ def run(cmd, **kwargs):
     print("RUN:", " ".join(map(str, cmd)))
     subprocess.run(cmd, check=True, **kwargs)
 
-def find_notebook(repo_dir, notebook_name):
-    matches = list(repo_dir.rglob(notebook_name))
+def find_notebook(repo_dir, notebook_path):
+    matches = list(repo_dir.rglob(notebook_path))
     if not matches:
-        raise FileNotFoundError(f"Notebook '{notebook_name}' not found in repository '{repo_dir}'")
+        raise FileNotFoundError(f"Notebook '{notebook_path}' not found in repository '{repo_dir}'")
     if len(matches) > 1:
         print(f"Warning: Multiple notebooks found. Using the first one: {matches[0]}")
     return matches[0].resolve()
@@ -21,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run OHC Notebook inside Blue-Cloud")
 
     parser.add_argument("--repository", type=str, required=True, help="Git repository URL")
-    parser.add_argument("--notebook_name", type=str, required=True, help="Notebook filename (e.g., OHC.ipynb)")
+    parser.add_argument("--notebook_path", type=str, required=True, help="Notebook filename (e.g., OHC.ipynb)")
     parser.add_argument("--data_path", type=str, required=True)
     parser.add_argument("--outputs_path", type=str, required=True)
 
@@ -46,7 +46,7 @@ def main():
         run(["git", "clone", args.repository, str(repo_dir)])
     repo_dir = repo_dir.resolve()
 
-    notebook_path = find_notebook(repo_dir, args.notebook_name)
+    notebook_path = find_notebook(repo_dir, args.notebook_path)
     print(f"Resolved notebook path: {notebook_path}")
     notebook_dir = notebook_path.parent
 
