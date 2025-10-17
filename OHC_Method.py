@@ -2,6 +2,8 @@ import argparse
 import os 
 import subprocess 
 import shutil
+import sys
+from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description="Run OHC Notebook inside Blue-Cloud")
@@ -20,25 +22,30 @@ def main():
     args = parser.parse_args()
 
     
-    os.makedirs(args.outputs_path, exist_ok=True)
-
+    notebook_path = Path(args.notebook_path).resolve()
+    outputs_path = Path(args.outputs_path).resolve()
     
-    with open(os.path.join(args.outputs_path, "inputs.txt"), "w") as f:
+    if not notebook_path.is_file():
+        raise FileNotFoundError(f"Notebook not found: {notebook_path}")
+    
+    with (outputs_path / "inputs.txt").open("w") as f:
         for k, v in vars(args).items():
             f.write(f"{k}: {v}\n")
     
     cmd = [
-        "jupyter", "nbconvert",
+        sys.executable, "-m", "nbconvert",
         "--to", "notebook",
-        "--execute", args.notebook_path,
-        "--output", os.path.join(args.outputs_path, "OHC_executed.ipynb"),
+        "--execute", str(notebook_path),
+        "--output", str(outputs_path / "OHC_executed.ipynb"),
         "--ExecutePreprocessor.timeout=600"
     ]
+
+    print("Executing notebook...")
     subprocess.run(cmd, check=True)
 
     for file in os.listdir("."):
         if file.endswith((".png", ".csv", ".nc")):
-            shutil.move(file, os.path.join(args.outputs_path, file))
+            shutil.move(file,outputs_path / file)
 
 if __name__ == "__main__":
     main()           
