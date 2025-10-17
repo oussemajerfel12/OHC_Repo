@@ -24,6 +24,10 @@ def main():
     
     notebook_path = Path(args.notebook_path).resolve()
     outputs_path = Path(args.outputs_path).resolve()
+
+    os.makedirs(outputs_path, exist_ok=True)
+
+    
     
     if not notebook_path.is_file():
         raise FileNotFoundError(f"Notebook not found: {notebook_path}")
