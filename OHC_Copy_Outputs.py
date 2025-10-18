@@ -1,57 +1,101 @@
+#!/usr/bin/env python3
+"""
+OHC_Copy_Outputs.py
+-------------------
+Mock-up method for Ocean Heat Content (OHC) processing.
+This script simply logs input parameters, simulates execution, 
+and copies outputs into the CCP shared folder (/ccp_data).
+"""
+
 import argparse
+from datetime import datetime
+from pathlib import Path
 import os
 import shutil
-from pathlib import Path
-import subprocess
+import json
 
-def run(cmd, **kwargs):
-    print("RUN:", " ".join(map(str, cmd)))
-    subprocess.run(cmd, check=True, **kwargs)
+# ---------------------------------------------------------------------
+# 🧩 Parse input arguments
+# ---------------------------------------------------------------------
+parser = argparse.ArgumentParser(description="Mock OHC Method Execution")
 
-def main():
-    parser = argparse.ArgumentParser(description="Copy OHC outputs to CCP data folder")
-    parser.add_argument("--repository", required=True)
-    parser.add_argument("--data_path", required=True)
-    parser.add_argument("--outputs_path", required=True)
-    parser.add_argument("--data_source", required=True)
-    parser.add_argument("--id_output_type", required=True)
-    parser.add_argument("--working_domain", required=True)
-    parser.add_argument("--start_time", required=True)
-    parser.add_argument("--end_time", required=True)
-    args = parser.parse_args()
+parser.add_argument("--repository", type=str, required=False, default="", help="Repository path")
+parser.add_argument("--data_path", type=str, required=False, help="Path to input data")
+parser.add_argument("--outputs_path", type=str, required=False, help="Path to output data")
+parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
+parser.add_argument("--id_output_type", type=str, required=True, help="Output type")
+parser.add_argument("--working_domain", type=str, required=True, help="Working domain in JSON format")
+parser.add_argument("--start_time", type=str, required=True, help="Start date (YYYY-MM-DD)")
+parser.add_argument("--end_time", type=str, required=False, help="End date (YYYY-MM-DD)")
 
-    repo_name = "ohc"
-    if not Path(repo_name).exists():
-        run(["git", "clone", args.repository, repo_name])
+args = parser.parse_args()
 
-    # Save parameters to a text file for traceability
-    inputs_file = Path(args.outputs_path) / "inputs.txt"
-    inputs_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(inputs_file, "w") as f:
-        f.write(f"repository: {args.repository}\n")
-        f.write(f"data_path: {args.data_path}\n")
-        f.write(f"outputs_path: {args.outputs_path}\n")
-        f.write(f"data_source: {args.data_source}\n")
-        f.write(f"id_output_type: {args.id_output_type}\n")
-        f.write(f"working_domain: {args.working_domain}\n")
-        f.write(f"start_time: {args.start_time}\n")
-        f.write(f"end_time: {args.end_time}\n")
+# ---------------------------------------------------------------------
+# 🧮 Assign variables
+# ---------------------------------------------------------------------
+repository = args.repository
+data_path = args.data_path or "/data"
+outputs_path = args.outputs_path or "/workspace/MEI/OceanHeatContent"
+data_source = args.data_source
+id_output_type = args.id_output_type
+working_domain = args.working_domain
+start_time = datetime.strptime(args.start_time, "%Y-%m-%d")
+end_time = datetime.strptime(args.end_time, "%Y-%m-%d") if args.end_time else None
 
-    print(f"Parameters saved to: {inputs_file}")
+# Ensure output directory exists
+Path(outputs_path).mkdir(parents=True, exist_ok=True)
 
-    # Copy results from the real output path to CCP data
-    src = Path(args.outputs_path)
-    dst = Path("/ccp_data")
-    dst.mkdir(parents=True, exist_ok=True)
+# ---------------------------------------------------------------------
+# 🧾 Save parameters to a log file
+# ---------------------------------------------------------------------
+inputs_file = Path(outputs_path) / "inputs.txt"
+with open(inputs_file, "w") as f:
+    f.write("=== OHC Copy Outputs - Execution Parameters ===\n\n")
+    f.write(f"Repository: {repository}\n")
+    f.write(f"Data path: {data_path}\n")
+    f.write(f"Outputs path: {outputs_path}\n")
+    f.write(f"Data source: {data_source}\n")
+    f.write(f"Output type: {id_output_type}\n")
+    f.write(f"Working domain: {working_domain}\n")
+    f.write(f"Start time: {start_time.strftime('%Y-%m-%d')}\n")
+    if end_time:
+        f.write(f"End time: {end_time.strftime('%Y-%m-%d')}\n")
+print(f"✅ Parameters saved to: {inputs_file}")
 
-    if src.exists():
-        for file in src.glob("*"):
-            shutil.copy(file, dst)
-        print(f"Copied to CCP data: {dst}")
-    else:
-        print(f"Warning: Output folder {src} not found!")
+# ---------------------------------------------------------------------
+# 📂 Simulate copy of output files to CCP shared data
+# ---------------------------------------------------------------------
+ccp_data_path = Path("/ccp_data")
+ccp_data_path.mkdir(parents=True, exist_ok=True)
 
-    print("Method finished successfully.")
+# Copy everything from outputs_path to /ccp_data
+copied_files = []
+for file in Path(outputs_path).glob("*"):
+    if file.is_file():
+        shutil.copy(file, ccp_data_path)
+        copied_files.append(file.name)
 
-if __name__ == "__main__":
-    main()
+if copied_files:
+    print(f"✅ Copied {len(copied_files)} files to {ccp_data_path}")
+else:
+    print(f"⚠️ No files found in {outputs_path} to copy.")
+
+# ---------------------------------------------------------------------
+# 💾 Summary log
+# ---------------------------------------------------------------------
+summary = {
+    "status": "success",
+    "repository": repository,
+    "data_path": data_path,
+    "outputs_path": outputs_path,
+    "copied_files": copied_files,
+    "ccp_data_path": str(ccp_data_path),
+    "timestamp": datetime.now().isoformat()
+}
+
+summary_file = Path(outputs_path) / "summary.json"
+with open(summary_file, "w") as sf:
+    json.dump(summary, sf, indent=2)
+
+print(f"📄 Summary saved to: {summary_file}")
+print("✅ Method finished successfully.")
