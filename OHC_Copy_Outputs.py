@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-"""
-OHC_Copy_Outputs.py
--------------------
-Mock-up method for Ocean Heat Content (OHC) processing.
-This script simply logs input parameters, simulates execution, 
-and copies outputs into the CCP shared folder (/ccp_data).
-"""
-
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +6,7 @@ import shutil
 import json
 
 # ---------------------------------------------------------------------
-# 🧩 Parse input arguments
+#  Parse input arguments
 # ---------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Mock OHC Method Execution")
 
@@ -31,7 +22,7 @@ parser.add_argument("--end_time", type=str, required=False, help="End date (YYYY
 args = parser.parse_args()
 
 # ---------------------------------------------------------------------
-# 🧮 Assign variables
+# Assign variables
 # ---------------------------------------------------------------------
 repository = args.repository
 data_path = args.data_path or "/data"
@@ -46,7 +37,7 @@ end_time = datetime.strptime(args.end_time, "%Y-%m-%d") if args.end_time else No
 Path(outputs_path).mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------
-# 🧾 Save parameters to a log file
+#  Save parameters to a log file
 # ---------------------------------------------------------------------
 inputs_file = Path(outputs_path) / "inputs.txt"
 with open(inputs_file, "w") as f:
@@ -60,10 +51,10 @@ with open(inputs_file, "w") as f:
     f.write(f"Start time: {start_time.strftime('%Y-%m-%d')}\n")
     if end_time:
         f.write(f"End time: {end_time.strftime('%Y-%m-%d')}\n")
-print(f"✅ Parameters saved to: {inputs_file}")
+print(f" Parameters saved to: {inputs_file}")
 
 # ---------------------------------------------------------------------
-# 📂 Simulate copy of output files to CCP shared data
+#  Simulate copy of output files to CCP shared data
 # ---------------------------------------------------------------------
 ccp_data_path = Path("/ccp_data")
 ccp_data_path.mkdir(parents=True, exist_ok=True)
@@ -76,12 +67,12 @@ for file in Path(outputs_path).glob("*"):
         copied_files.append(file.name)
 
 if copied_files:
-    print(f"✅ Copied {len(copied_files)} files to {ccp_data_path}")
+    print(f" Copied {len(copied_files)} files to {ccp_data_path}")
 else:
-    print(f"⚠️ No files found in {outputs_path} to copy.")
+    print(f" No files found in {outputs_path} to copy.")
 
 # ---------------------------------------------------------------------
-# 💾 Summary log
+#  Summary log
 # ---------------------------------------------------------------------
 summary = {
     "status": "success",
@@ -97,5 +88,5 @@ summary_file = Path(outputs_path) / "summary.json"
 with open(summary_file, "w") as sf:
     json.dump(summary, sf, indent=2)
 
-print(f"📄 Summary saved to: {summary_file}")
-print("✅ Method finished successfully.")
+print(f"Summary saved to: {summary_file}")
+print("Method finished successfully.")
