@@ -1,69 +1,57 @@
 import argparse
-from datetime import datetime
 import os
 import shutil
+from pathlib import Path
+import subprocess
 
-# ----------------------------
-# Parse input arguments
-# ----------------------------
-parser = argparse.ArgumentParser(description="OHC Copy Outputs Mock Method")
+def run(cmd, **kwargs):
+    print("RUN:", " ".join(map(str, cmd)))
+    subprocess.run(cmd, check=True, **kwargs)
 
-parser.add_argument("--repository", type=str, required=False, default="", help="Repository path")
-parser.add_argument("--data_path", type=str, required=False, help="Path to input data")
-parser.add_argument("--outputs_path", type=str, required=False, help="Path to output data")
-parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
-parser.add_argument("--id_output_type", type=str, required=True, help="Output type (e.g., ohc_timeseries)")
-parser.add_argument("--working_domain", type=str, required=True, help="Working domain")
-parser.add_argument("--start_time", type=str, required=True, help="Start date (YYYY-MM-DD)")
-parser.add_argument("--end_time", type=str, required=False, help="End date (YYYY-MM-DD)")
+def main():
+    parser = argparse.ArgumentParser(description="Copy OHC outputs to CCP data folder")
+    parser.add_argument("--repository", required=True)
+    parser.add_argument("--data_path", required=True)
+    parser.add_argument("--outputs_path", required=True)
+    parser.add_argument("--data_source", required=True)
+    parser.add_argument("--id_output_type", required=True)
+    parser.add_argument("--working_domain", required=True)
+    parser.add_argument("--start_time", required=True)
+    parser.add_argument("--end_time", required=True)
+    args = parser.parse_args()
 
-args = parser.parse_args()
+    repo_name = "ohc"
+    if not Path(repo_name).exists():
+        run(["git", "clone", args.repository, repo_name])
 
-# ----------------------------
-# Prepare variables and paths
-# ----------------------------
-repository = args.repository
-data_path = args.data_path
-outputs_path = args.outputs_path
-data_source = args.data_source
-id_output_type = args.id_output_type
-working_domain = args.working_domain
-start_time = datetime.strptime(args.start_time, "%Y-%m-%d")
-end_time = datetime.strptime(args.end_time,"%Y-%m-%d")
+    # Save parameters to a text file for traceability
+    inputs_file = Path(args.outputs_path) / "inputs.txt"
+    inputs_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(inputs_file, "w") as f:
+        f.write(f"repository: {args.repository}\n")
+        f.write(f"data_path: {args.data_path}\n")
+        f.write(f"outputs_path: {args.outputs_path}\n")
+        f.write(f"data_source: {args.data_source}\n")
+        f.write(f"id_output_type: {args.id_output_type}\n")
+        f.write(f"working_domain: {args.working_domain}\n")
+        f.write(f"start_time: {args.start_time}\n")
+        f.write(f"end_time: {args.end_time}\n")
 
-# Make sure outputs_path exists
-os.makedirs(outputs_path, exist_ok=True)
+    print(f"Parameters saved to: {inputs_file}")
 
-# ----------------------------
-# Save all inputs to a text file
-# ----------------------------
-output_file = os.path.join(outputs_path, "inputs.txt")
+    # Copy results from the real output path to CCP data
+    src = Path(args.outputs_path)
+    dst = Path("/ccp_data")
+    dst.mkdir(parents=True, exist_ok=True)
 
-with open(output_file, "w") as f:
-    f.write("=== OHC Mock-Up Method Inputs ===\n")
-    f.write(f"repository: {repository}\n")
-    f.write(f"data_path: {data_path}\n")
-    f.write(f"outputs_path: {outputs_path}\n")
-    f.write(f"data_source: {data_source}\n")
-    f.write(f"id_output_type: {id_output_type}\n")
-    f.write(f"working_domain: {working_domain}\n")
-    f.write(f"start_time: {start_time.strftime('%Y-%m-%d')}\n")
-    f.write(f"end_time: {end_time.strftime('%Y-%m-%d')}\n")
+    if src.exists():
+        for file in src.glob("*"):
+            shutil.copy(file, dst)
+        print(f"Copied to CCP data: {dst}")
+    else:
+        print(f"Warning: Output folder {src} not found!")
 
-print(f" Parameters saved to: {output_file}")
+    print("Method finished successfully.")
 
-# ----------------------------
-# Copy to /ccp_data for Blue-Cloud visibility
-# ----------------------------
-ccp_target = "/ccp_data"
-
-if os.path.exists(ccp_target):
-    try:
-        shutil.copy(output_file, os.path.join(ccp_target, "inputs.txt"))
-        print(f"Copied to CCP data: {ccp_target}/inputs.txt")
-    except Exception as e:
-        print(f" Could not copy to {ccp_target}: {e}")
-else:
-    print(f"CCP data folder not found at {ccp_target}")
-
-print("Method finished successfully.")
+if __name__ == "__main__":
+    main()
