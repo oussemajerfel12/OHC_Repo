@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import shutil
 import json
-
+import sys
 
 parser = argparse.ArgumentParser(description="Mock OHC Method Execution")
 
@@ -19,7 +19,6 @@ parser.add_argument("--end_time", type=str, required=False, help="End date (YYYY
 
 args = parser.parse_args()
 
-
 repository = args.repository
 data_path = args.data_path or "/data"
 outputs_path = args.outputs_path or "/workspace/MEI/OceanHeatContent"
@@ -29,9 +28,7 @@ working_domain = args.working_domain
 start_time = datetime.strptime(args.start_time, "%Y-%m-%d")
 end_time = datetime.strptime(args.end_time, "%Y-%m-%d") if args.end_time else None
 
-
 Path(outputs_path).mkdir(parents=True, exist_ok=True)
-
 
 inputs_file = Path(outputs_path) / "inputs.txt"
 with open(inputs_file, "w") as f:
@@ -45,12 +42,11 @@ with open(inputs_file, "w") as f:
     f.write(f"Start time: {start_time.strftime('%Y-%m-%d')}\n")
     if end_time:
         f.write(f"End time: {end_time.strftime('%Y-%m-%d')}\n")
-print(f" Parameters saved to: {inputs_file}")
-
+print(f"Parameters saved to: {inputs_file}")
 
 ccp_data_path = Path("/ccp_data")
 ccp_data_path.mkdir(parents=True, exist_ok=True)
-
+os.chmod(ccp_data_path, 0o777)
 
 copied_files = []
 for file in Path(outputs_path).glob("*"):
@@ -59,9 +55,9 @@ for file in Path(outputs_path).glob("*"):
         copied_files.append(file.name)
 
 if copied_files:
-    print(f" Copied {len(copied_files)} files to {ccp_data_path}")
+    print(f"Copied {len(copied_files)} files: {', '.join(copied_files)}")
 else:
-    print(f" No files found in {outputs_path} to copy.")
-
+    print(f"No files found in {outputs_path} to copy.")
 
 print("Method finished successfully.")
+sys.exit(0)
