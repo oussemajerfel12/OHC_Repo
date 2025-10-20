@@ -5,9 +5,7 @@ import os
 import shutil
 import json
 
-# ---------------------------------------------------------------------
-#  Parse input arguments
-# ---------------------------------------------------------------------
+
 parser = argparse.ArgumentParser(description="Mock OHC Method Execution")
 
 parser.add_argument("--repository", type=str, required=False, default="", help="Repository path")
@@ -21,9 +19,7 @@ parser.add_argument("--end_time", type=str, required=False, help="End date (YYYY
 
 args = parser.parse_args()
 
-# ---------------------------------------------------------------------
-# Assign variables
-# ---------------------------------------------------------------------
+
 repository = args.repository
 data_path = args.data_path or "/data"
 outputs_path = args.outputs_path or "/workspace/MEI/OceanHeatContent"
@@ -33,12 +29,10 @@ working_domain = args.working_domain
 start_time = datetime.strptime(args.start_time, "%Y-%m-%d")
 end_time = datetime.strptime(args.end_time, "%Y-%m-%d") if args.end_time else None
 
-# Ensure output directory exists
+
 Path(outputs_path).mkdir(parents=True, exist_ok=True)
 
-# ---------------------------------------------------------------------
-#  Save parameters to a log file
-# ---------------------------------------------------------------------
+
 inputs_file = Path(outputs_path) / "inputs.txt"
 with open(inputs_file, "w") as f:
     f.write("=== OHC Copy Outputs - Execution Parameters ===\n\n")
@@ -53,13 +47,11 @@ with open(inputs_file, "w") as f:
         f.write(f"End time: {end_time.strftime('%Y-%m-%d')}\n")
 print(f" Parameters saved to: {inputs_file}")
 
-# ---------------------------------------------------------------------
-#  Simulate copy of output files to CCP shared data
-# ---------------------------------------------------------------------
+
 ccp_data_path = Path("/ccp_data")
 ccp_data_path.mkdir(parents=True, exist_ok=True)
 
-# Copy everything from outputs_path to /ccp_data
+
 copied_files = []
 for file in Path(outputs_path).glob("*"):
     if file.is_file():
@@ -71,22 +63,5 @@ if copied_files:
 else:
     print(f" No files found in {outputs_path} to copy.")
 
-# ---------------------------------------------------------------------
-#  Summary log
-# ---------------------------------------------------------------------
-summary = {
-    "status": "success",
-    "repository": repository,
-    "data_path": data_path,
-    "outputs_path": outputs_path,
-    "copied_files": copied_files,
-    "ccp_data_path": str(ccp_data_path),
-    "timestamp": datetime.now().isoformat()
-}
 
-summary_file = Path(outputs_path) / "summary.json"
-with open(summary_file, "w") as sf:
-    json.dump(summary, sf, indent=2)
-
-print(f"Summary saved to: {summary_file}")
 print("Method finished successfully.")
