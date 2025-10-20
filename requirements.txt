@@ -1,4 +1,7 @@
-xarray
 numpy
-matplotlib
 netCDF4
+matplotlib
+xarray
+ipywidgets
+pandas
+requests
