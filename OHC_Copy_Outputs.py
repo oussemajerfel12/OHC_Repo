@@ -51,6 +51,11 @@ print(f" Parameters saved to: {inputs_file}")
 ccp_data_path = Path("/ccp_data")
 ccp_data_path.mkdir(parents=True, exist_ok=True)
 
+print(f"DEBUG – Checking outputs_path: {outputs_path}")
+print("Contents:")
+for p in Path(outputs_path).glob("*"):
+    print(" ", p)
+
 
 copied_files = []
 for file in Path(outputs_path).glob("*"):
