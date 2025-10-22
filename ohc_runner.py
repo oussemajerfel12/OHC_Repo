@@ -6,13 +6,6 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import os
 
-"""
-in Local :
-python ohc_runner.py --mask_file "blue-cloud-dataspace/MEI/INGV/INPUT/BATHYMETRY/gebco_2019_mask_1_8_edited_final.nc" --temperature_file "blue-cloud-dataspace/MEI/INGV/INPUT/CLIMATOLOGY/Temperature_sliding_climatology_WP.nc" --outdir "OceanHeatContent"
-in Docker :
-docker run -it -v "C:\Users\ousse\OHC_Repo\blue-cloud-dataspace\MEI\INGV:/data" ohc-runner --mask_file /data/INPUT/BATHYMETRY/gebco_2019_mask_1_8_edited_final.nc --temperature_file /data/INPUT/CLIMATOLOGY/Temperature_sliding_climatology_WP.nc --outdir /app/OceanHeatContent
-
-"""
 
 # ==============================
 # Constants
