@@ -1,41 +1,36 @@
 import argparse
+import datetime
+import json
 from pathlib import Path
 from netCDF4 import Dataset
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 import os
-
+import re
 
 # ==============================
 # Constants
 # ==============================
-years = np.arange(1960, 2015)
-
 RHO = 1030.0
 CP = 3980.0
 
-dx = dy = 0.125 
+dx = dy = 0.125
 lonr = np.arange(-5.625, 36.5 + dx, dx)
 latr = np.arange(30.0, 46.0 + dy, dy)
-depthr = np.array([0., 5., 10., 15., 20., 25., 30., 35., 40., 45.,
-                   50., 55., 60., 65., 70., 75., 80., 85., 90., 95.,
-                   100., 125., 150., 175., 200., 225., 250., 275., 300., 325.,
-                   350., 375., 400., 425., 450., 475., 500., 550., 600., 650.,
-                   700., 750., 800., 850., 900., 950., 1000., 1050., 1100., 1150.,
-                   1200., 1250., 1300., 1350., 1400., 1450., 1500., 1550., 1600., 1650.,
-                   1700., 1750., 1800., 1850., 1900., 1950., 2000.])
+depthr = np.array([
+    0., 5., 10., 15., 20., 25., 30., 35., 40., 45.,
+    50., 55., 60., 65., 70., 75., 80., 85., 90., 95.,
+    100., 125., 150., 175., 200., 225., 250., 275., 300., 325.,
+    350., 375., 400., 425., 450., 475., 500., 550., 600., 650.,
+    700., 750., 800., 850., 900., 950., 1000., 1050., 1100., 1150.,
+    1200., 1250., 1300., 1350., 1400., 1450., 1500., 1550., 1600., 1650.,
+    1700., 1750., 1800., 1850., 1900., 1950., 2000.
+])
 deg_multiplier = 111319.5
 
-lon_min = -5.625
-lon_max = 36.5
-lat_min = 30.0
-lat_max = 46.0
-depth_min = 0
-depth_max = 20000
 t_min = 1960
 t_max = 2014
-experiment = "WP"
 
 # ==============================
 # Functions
@@ -55,7 +50,7 @@ def get_mask_index(mask_file , lon_min, lon_max, lat_min, lat_max, depth_min, de
    
     return start_lon_idx, end_lon_idx, start_lat_idx , end_lat_idx , start_depth_idx, end_depth_idx
 
-def load_temp(temp_file,mask_file):
+def load_temp(temp_file,mask_file,lon_min, lon_max, lat_min, lat_max, depth_min, depth_max,years):
     with Dataset(temp_file,"r") as temp_data:
         time = temp_data["time"][:]
         climatology_bounds = temp_data["climatology_bounds"][:]
@@ -379,19 +374,45 @@ def save_ohc_temperature_nc(output_path,climatology_bounds,temperature_anomaly_p
 
     out_data.close()
     print(f"NetCDF file saved: {out_file}")
+
+def fix_json_quotes(s: str):
+    s = s.strip()
+    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+        s = s[1:-1]
+    s = re.sub(r'([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*:)', r'\1"\2"\3', s)
+    return s
     
 def main():
     parser = argparse.ArgumentParser(description="Compute Ocean Heat Content and Temperature Anomaly.")
     parser.add_argument("--mask_file", type=str, required=True)
     parser.add_argument("--temperature_file", type=str, required=True)
+    parser.add_argument("--working_domain",type=str,required=True)
     parser.add_argument("--outdir", type=str, default="OceanHeatContent")
+    parser.add_argument("--start_date", type=str, required=True)
+    parser.add_argument("--end_date", type=str, required=True)
     
     args = parser.parse_args()
+
+    try:
+        print(args.working_domain)
+        domain = fix_json_quotes(args.working_domain)
+        print (domain)
+        domain = json.loads(domain)
+        lon_min, lat_min, lon_max, lat_max = domain["box"][0]
+        depth_min, depth_max = domain["depth_layers"][0]
+    except (KeyError, IndexError, json.JSONDecodeError) as e:
+        raise ValueError(f"Invalid domain format: {domain}\nError: {e}")
+    
+    start_year = datetime.datetime.strptime(args.start_date, "%Y-%m-%d").year
+    end_year = datetime.datetime.strptime(args.end_date, "%Y-%m-%d").year
+
 
     mask_file = args.mask_file
     temperature_file = args.temperature_file
     outdir = args.outdir
-    years = np.arange(1960, 2015)
+
+    years = np.arange(start_year, end_year + 1)
+
     os.makedirs(outdir, exist_ok=True)
 
 
@@ -401,7 +422,7 @@ def main():
         mask_file, lon_min, lon_max, lat_min, lat_max, depth_min, depth_max
     )
 
-    temperature, temperature_reference, temperature_filtered, climatology_bounds = load_temp(temperature_file, mask_file)
+    temperature, temperature_reference, temperature_filtered, climatology_bounds = load_temp(temperature_file, mask_file,lon_min, lon_max, lat_min, lat_max, depth_min, depth_max,years)
     year_indices = np.where((years >= t_min) & (years <= t_max))[0]
     temperature = temperature[:, :, :, year_indices]
 
