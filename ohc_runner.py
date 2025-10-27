@@ -173,34 +173,25 @@ def plot_mask_levels(lon_mask, lat_mask, mask, depth_mask,
             plt.close()
     
 
-def avg_temperature_anomaly_plt(temperature, temperature_reference, output_path, suffix):
-    temperature_reference_4d = np.repeat(temperature_reference[:, :, :], temperature.shape[3], axis=3)
+def avg_temperature_anomaly_plt(temperature, temperature_reference, depthr_subset, output_path, suffix):
+    temperature_reference_4d = np.repeat(temperature_reference, temperature.shape[3], axis=3)
     temperature_diff = temperature - temperature_reference_4d
-    temperature_profile = np.nanmean(temperature_diff, axis=(0, 1))
+    temperature_profile = np.nanmean(temperature_diff, axis=(0,1))
 
-    plt.figure(figsize=(16, 6))
+    plt.figure(figsize=(16,6))
     ax = plt.gca()
-    ax.tick_params(axis='both', labelsize=16)
-
     vmin, vmax = -1.0, 1.0
-    contour_levels = np.linspace(vmin, vmax, 21)
-
-    pcolor = ax.pcolor(np.arange(temperature_profile.shape[1]), -depthr, temperature_profile,
+    pcolor = ax.pcolor(np.arange(temperature_profile.shape[1]), -depthr_subset, temperature_profile,
                        vmin=vmin, vmax=vmax, cmap='bwr', shading='auto')
-
-    ax.contour(np.arange(temperature_profile.shape[1]), -depthr, temperature_profile,
-               levels=contour_levels, colors='k', linewidths=0.4)
-
-    cbar = plt.colorbar(pcolor, orientation="vertical", shrink=0.8)
-    cbar.ax.tick_params(labelsize=16)
+    ax.contour(np.arange(temperature_profile.shape[1]), -depthr_subset, temperature_profile,
+               levels=np.linspace(vmin,vmax,21), colors='k', linewidths=0.4)
+    cbar = plt.colorbar(pcolor, orientation='vertical', shrink=0.8)
     cbar.set_label('$\\circ{C}$', fontsize=20, labelpad=10)
-
-
     plt.title("Temperature Anomaly", fontsize=24)
     plt.tight_layout()
     os.makedirs(output_path, exist_ok=True)
     plt.savefig(f"{output_path}/TEMP_ANOMALY_{suffix}.png", bbox_inches='tight', dpi=200)
-    #plt.show()
+    plt.close()
 
 
 
@@ -228,6 +219,8 @@ def plot_temperature_profile(temperature, depthr, years, output_path, suffix, vm
     plt.tight_layout()
     plt.savefig(f"{output_path}/TEMP_PROFILE_{suffix}.png", bbox_inches='tight', dpi=200)
     #plt.show()
+    plt.close()
+
 
 def compute_temperature_anomaly_and_ohc(temperature, temperature_reference, mask,delta_lon, delta_lat, delta_depth,depthr, reference_density,specific_heat_capacity,bottom_depth):
     bottom_depth_index = np.argmin(np.abs(depthr - bottom_depth))
@@ -291,6 +284,8 @@ def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_de
     
     plt.savefig(f"{output_path}/TEMP_ANOMALY_TREND_{suffix}.png", bbox_inches='tight', dpi=200)
     #plt.show()
+    plt.close()
+
 
 def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path,suffix, start_year=1993):
     plt.figure(figsize=(12, 4))
@@ -317,6 +312,8 @@ def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path
     plt.tight_layout()
     plt.savefig(f"{output_path}/OHC_700_ANOMALY_{suffix}.png", bbox_inches='tight', dpi=200)
     #plt.show()
+    plt.close()
+
 
     
 def save_ohc_temperature_nc(output_path,climatology_bounds,temperature_anomaly_profile, suffix, years, ocean_heat_content_profile):
@@ -387,6 +384,8 @@ def main():
     parser.add_argument("--mask_file", type=str, required=True)
     parser.add_argument("--temperature_file", type=str, required=True)
     parser.add_argument("--working_domain",type=str,required=True)
+    parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
+    parser.add_argument("--id_output_type", type=str, required=True, help="Output type (e.g., mhw_timeseries)")
     parser.add_argument("--outdir", type=str, default="OceanHeatContent")
     parser.add_argument("--start_date", type=str, required=True)
     parser.add_argument("--end_date", type=str, required=True)
@@ -424,20 +423,24 @@ def main():
 
     temperature, temperature_reference, temperature_filtered, climatology_bounds = load_temp(temperature_file, mask_file,lon_min, lon_max, lat_min, lat_max, depth_min, depth_max,years)
     year_indices = np.where((years >= t_min) & (years <= t_max))[0]
+    
     temperature = temperature[:, :, :, year_indices]
 
     selected_years = years[year_indices]
 
+    depthr_subset = depth_mask
 
-    plot_temperature_profile(temperature, depthr, selected_years, output_path=outdir, suffix=suffix)
 
-    avg_temperature_anomaly_plt (temperature,temperature_reference,output_path=outdir,suffix=suffix)
+
+    plot_temperature_profile(temperature, depthr_subset, selected_years, output_path=outdir, suffix=suffix)
+
+    avg_temperature_anomaly_plt (temperature,temperature_reference,depthr_subset,output_path=outdir,suffix=suffix)
 
     temperature_anomaly_profile, ocean_heat_content_profile, bottom_depth_index = compute_temperature_anomaly_and_ohc(temperature,temperature_reference,mask,delta_lon,delta_lat,delta_depth,depthr,reference_density=RHO,specific_heat_capacity=CP,bottom_depth=depth_max)
 
-    plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr[bottom_depth_index],start_year=1993, output_path=outdir, suffix=suffix)
+    plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr_subset[bottom_depth_index],start_year=start_year, output_path=outdir, suffix=suffix)
 
-    plot_ohc_anomaly(selected_years,ocean_heat_content_profile,bottom_depth=depthr[bottom_depth_index],start_year=1993,output_path=outdir,suffix=suffix)
+    plot_ohc_anomaly(selected_years,ocean_heat_content_profile,bottom_depth=depthr_subset[bottom_depth_index],start_year=start_year,output_path=outdir,suffix=suffix)
 
     save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile)
 
