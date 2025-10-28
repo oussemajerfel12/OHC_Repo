@@ -1,0 +1,9 @@
+inputs:
+  clim:
+    - "Temperature_sliding_climatology_WP":
+        name: "Temperature_sliding_climatology_WP.nc"
+        url: "https://data.d4science.net/7LLjQ"
+  bathy: 
+    - "gebco_2019_mask_1_8_edited_final":
+        name: "gebco_2019_mask_1_8_edited_final.nc"
+        url: "https://data.d4science.net/NVr2L"
