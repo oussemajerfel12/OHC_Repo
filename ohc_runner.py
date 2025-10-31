@@ -384,7 +384,7 @@ def main():
     parser.add_argument("--mask_file", type=str, required=True)
     parser.add_argument("--temperature_file", type=str, required=True)
     parser.add_argument("--working_domain",type=str,required=True)
-    parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
+    #parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
     parser.add_argument("--id_output_type", type=str, required=True, help="Output type (e.g., mhw_timeseries)")
     parser.add_argument("--outdir", type=str, default="OceanHeatContent")
     parser.add_argument("--start_date", type=str, required=True)
