@@ -18,7 +18,7 @@ def download_file(url, dest_path):
         print(f"[ERROR] Failed to download {url}: {e}")
         raise
 
-def main(config_path, base_outdir):
+def main(config_path, base_outdir, data_source):
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
@@ -26,25 +26,35 @@ def main(config_path, base_outdir):
         config = yaml.safe_load(f)
 
     inputs = config.get("inputs", {})
-    if not inputs:
-        print("No inputs found in config.yaml")
-        return
+    clim_list = inputs.get("clim", [])
+    bathy_list = inputs.get("bathy", [])
 
-    for category, items in inputs.items():
-        for item in items:
-            for key, meta in item.items():
-                name = meta["name"]
-                url = meta["url"]
+    clim_dict = {list(item.keys())[0]: list(item.values())[0] for item in clim_list}
+    bathy_dict = {list(item.keys())[0]: list(item.values())[0] for item in bathy_list}
 
-                subdir = "CLIMATOLOGY" if category.lower().startswith("clim") else "BATHYMETRY"
-                dest_path = os.path.join(base_outdir, "INPUT", subdir, name)
+    for bathy_id, meta in bathy_dict.items():
+        name, url = meta["name"], meta["url"]
+        dest_path = os.path.join(base_outdir, "INPUT", "BATHYMETRY", name)
+        download_file(url, dest_path)
 
-                download_file(url, dest_path)
+    if data_source:
+        for ds_id in data_source:
+            if ds_id not in clim_dict:
+                raise ValueError(f"[ERROR] '{ds_id}' not found in config under 'clim'")
+            meta = clim_dict[ds_id]
+            name, url = meta["name"], meta["url"]
+            dest_path = os.path.join(base_outdir, "INPUT", "CLIMATOLOGY", name)
+            download_file(url, dest_path)
+    else:
+        print("No climatology dataset IDs provided (data_source empty).")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download datasets")
     parser.add_argument("--config", required=True)
     parser.add_argument("--outdir", default=os.environ.get("CCP_DATA", "/data"))
+    parser.add_argument("--data_source", type=str)
     args = parser.parse_args()
 
-    main(args.config, args.outdir)
+    import json
+    data_source = json.loads(args.data_source) if args.data_source else []
+    main(args.config, args.outdir, data_source)

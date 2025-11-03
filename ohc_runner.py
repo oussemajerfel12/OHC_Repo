@@ -8,12 +8,15 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import os
 import re
+from download import main as download_datasets
+
 
 # ==============================
 # Constants
 # ==============================
 RHO = 1030.0
 CP = 3980.0
+CONFIG_PATH ="config.yml"
 
 dx = dy = 0.125
 lonr = np.arange(-5.625, 36.5 + dx, dx)
@@ -380,17 +383,23 @@ def fix_json_quotes(s: str):
     return s
     
 def main():
+
     parser = argparse.ArgumentParser(description="Compute Ocean Heat Content and Temperature Anomaly.")
     parser.add_argument("--mask_file", type=str, required=True)
     parser.add_argument("--temperature_file", type=str, required=True)
     parser.add_argument("--working_domain",type=str,required=True)
-    #parser.add_argument("--data_source", type=str, required=True, help="Dataset ID")
-    parser.add_argument("--id_output_type", type=str, required=True, help="Output type (e.g., mhw_timeseries)")
+    parser.add_argument("--data_source", type=str, required=True)
+    parser.add_argument("--id_output_type", type=str, required=True)
     parser.add_argument("--outdir", type=str, default="OceanHeatContent")
     parser.add_argument("--start_date", type=str, required=True)
     parser.add_argument("--end_date", type=str, required=True)
     
     args = parser.parse_args()
+    data_source = json.loads(args.data_source) if args.data_source else []
+
+    print("\n[STEP] Downloading required datasets from config...")
+    download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
+    print("[INFO] Dataset download completed.\n")
 
     try:
         print(args.working_domain)
