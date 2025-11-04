@@ -404,9 +404,9 @@ def main():
     id_output_type = args.id_output_type.lower().strip()
     data_source = json.loads(args.data_source) if args.data_source else []
 
-    #print("\n[STEP] Downloading required datasets from config...")
-    #download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
-    #print("[INFO] Dataset download completed.\n")
+    print("\n[STEP] Downloading required datasets from config...")
+    download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
+    print("[INFO] Dataset download completed.\n")
 
     try:
         print(args.working_domain)
