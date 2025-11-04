@@ -16,7 +16,9 @@ from download import main as download_datasets
 # ==============================
 RHO = 1030.0
 CP = 3980.0
-CONFIG_PATH ="config.yml"
+CONFIG_PATH = "config.yml"
+TEMPANOM = "ohc_tempanom_timeseries"
+ANOMALY = "ohc_anomaly_timeseries"
 
 dx = dy = 0.125
 lonr = np.arange(-5.625, 36.5 + dx, dx)
@@ -319,9 +321,13 @@ def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path
 
 
     
-def save_ohc_temperature_nc(output_path,climatology_bounds,temperature_anomaly_profile, suffix, years, ocean_heat_content_profile):
-    
-    out_file = os.path.join(output_path, f'Ocean_Heat_Content_WP4_{suffix}.nc')
+def save_ohc_temperature_nc(output_path,climatology_bounds,temperature_anomaly_profile, suffix, years, ocean_heat_content_profile, id_output_type):
+
+    if id_output_type == ANOMALY :
+        out_file = os.path.join(output_path, f'Ocean_Heat_Content_WP4_{suffix}.nc')
+    elif id_output_type == TEMPANOM :
+        out_file = os.path.join(output_path, f'OHC_TemperatureAnomaly_WP4_{suffix}.nc')
+
     
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     
@@ -395,11 +401,12 @@ def main():
     parser.add_argument("--end_date", type=str, required=True)
     
     args = parser.parse_args()
+    id_output_type = args.id_output_type.lower().strip()
     data_source = json.loads(args.data_source) if args.data_source else []
 
-    print("\n[STEP] Downloading required datasets from config...")
-    download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
-    print("[INFO] Dataset download completed.\n")
+    #print("\n[STEP] Downloading required datasets from config...")
+    #download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
+    #print("[INFO] Dataset download completed.\n")
 
     try:
         print(args.working_domain)
@@ -439,19 +446,21 @@ def main():
 
     depthr_subset = depth_mask
 
-
-
-    plot_temperature_profile(temperature, depthr_subset, selected_years, output_path=outdir, suffix=suffix)
-
-    avg_temperature_anomaly_plt (temperature,temperature_reference,depthr_subset,output_path=outdir,suffix=suffix)
-
+    
+    
     temperature_anomaly_profile, ocean_heat_content_profile, bottom_depth_index = compute_temperature_anomaly_and_ohc(temperature,temperature_reference,mask,delta_lon,delta_lat,delta_depth,depthr,reference_density=RHO,specific_heat_capacity=CP,bottom_depth=depth_max)
 
-    plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr_subset[bottom_depth_index],start_year=start_year, output_path=outdir, suffix=suffix)
+    if id_output_type == TEMPANOM:
+        #plot_temperature_profile(temperature, depthr_subset, selected_years, output_path=outdir, suffix=suffix)
+        #avg_temperature_anomaly_plt (temperature,temperature_reference,depthr_subset,output_path=outdir,suffix=suffix)
+        plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr_subset[bottom_depth_index],start_year=start_year, output_path=outdir, suffix=suffix)
+        save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile,id_output_type)
+    elif id_output_type == ANOMALY:
+        plot_ohc_anomaly(selected_years,ocean_heat_content_profile,bottom_depth=depthr_subset[bottom_depth_index],start_year=start_year,output_path=outdir,suffix=suffix)
+        save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile,id_output_type)
+    else:
+        raise ValueError(f"[ERROR] '{id_output_type}' not correct")
 
-    plot_ohc_anomaly(selected_years,ocean_heat_content_profile,bottom_depth=depthr_subset[bottom_depth_index],start_year=start_year,output_path=outdir,suffix=suffix)
-
-    save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile)
 
 
     print(f"Plots saved in: {outdir}")
