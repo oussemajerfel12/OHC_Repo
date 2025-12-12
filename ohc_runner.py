@@ -279,7 +279,7 @@ def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_de
     
     plt.xlabel("Years", fontsize=16)
     plt.ylabel("Temp. anomaly (°C)", fontsize=16)
-    plt.title(f"Temperature anomaly 0-{bottom_depth:.0f} m\n{box_info}", fontsize=18)
+    plt.title(f"Temperature anomaly\n{box_info}", fontsize=14)
     plt.legend(fontsize=14)
     
     plt.tick_params(axis='both', which='major', labelsize=16)
@@ -308,7 +308,7 @@ def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth, output_pat
 
     plt.xlabel("Years", fontsize=16)
     plt.ylabel("OHC (J m⁻²)", fontsize=16)
-    plt.title(f"Ocean Heat Content anomaly 0-{bottom_depth:.0f} m\n{box_info}", fontsize=18)
+    plt.title(f"Ocean Heat Content anomaly\n{box_info}", fontsize=14)
     plt.legend(fontsize=16)
     plt.tick_params(axis='both', which='major', labelsize=16)
 
