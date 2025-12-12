@@ -1,15 +1,26 @@
 FROM python:3.11-slim
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
 
-RUN mkdir -p /data/INPUT/BATHYMETRY /data/INPUT/CLIMATOLOGY
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      gfortran \
+      libblas-dev \
+      liblapack-dev \
+      libhdf5-dev \
+      libnetcdf-dev \
+      pkg-config \
+      wget \
+      git && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY blue-cloud-dataspace/MEI/INGV/INPUT/BATHYMETRY/gebco_2019_mask_1_8_edited_final.nc /data/INPUT/BATHYMETRY/
-COPY blue-cloud-dataspace/MEI/INGV/INPUT/CLIMATOLOGY/Temperature_sliding_climatology_WP.nc /data/INPUT/CLIMATOLOGY/
+COPY requirements.txt /app/requirements.txt
 
-COPY ohc_runner.py .
-COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r /app/requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["python","ohc_runner.py"]
+ENTRYPOINT ["/bin/bash", "-lc"]
