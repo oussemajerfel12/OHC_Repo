@@ -135,11 +135,10 @@ def load_mask(mask_file, lon_min, lon_max, lat_min, lat_max, depth_min, depth_ma
 
 
 def output_suffix(lon_min, lon_max, lat_min, lat_max, depth_min, depth_max):
-    suffix = (
-        f"{int(lon_min)}_{int(lon_max)}_"
-        f"{int(lat_min)}_{int(lat_max)}_"
-        f"{int(depth_min)}_{int(depth_max)}"
-    )
+    # Simple date-based suffix
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y%m%d")
+    suffix = f"{int(depth_max)}m_{timestamp}"
     return suffix
 
 def plot_mask_levels(lon_mask, lat_mask, mask, depth_mask, 
@@ -287,7 +286,7 @@ def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_de
     
     plt.tight_layout()
     
-    plt.savefig(f"{output_path}/TEMP_ANOMALY_TREND_{suffix}.png", bbox_inches='tight', dpi=200)
+    plt.savefig(f"{output_path}/temp_anomaly_{suffix}.png", bbox_inches='tight', dpi=200)
     #plt.show()
     plt.close()
 
@@ -315,18 +314,18 @@ def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path
     plt.tick_params(axis='both', which='major', labelsize=16)
 
     plt.tight_layout()
-    plt.savefig(f"{output_path}/OHC_700_ANOMALY_{suffix}.png", bbox_inches='tight', dpi=200)
+    plt.savefig(f"{output_path}/ohc_anomaly_{suffix}.png", bbox_inches='tight', dpi=200)
     #plt.show()
     plt.close()
 
 
     
-def save_ohc_temperature_nc(output_path,climatology_bounds,temperature_anomaly_profile, suffix, years, ocean_heat_content_profile, id_output_type):
+def save_ohc_temperature_nc(output_path, climatology_bounds, temperature_anomaly_profile, suffix, years, ocean_heat_content_profile, id_output_type):
 
     if id_output_type == ANOMALY :
-        out_file = os.path.join(output_path, f'Ocean_Heat_Content_WP4_{suffix}.nc')
+        out_file = os.path.join(output_path, f'OHC_anomaly_{suffix}.nc')
     elif id_output_type == TEMPANOM :
-        out_file = os.path.join(output_path, f'OHC_TemperatureAnomaly_WP4_{suffix}.nc')
+        out_file = os.path.join(output_path, f'OHC_temp_anomaly_{suffix}.nc')
 
     
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
