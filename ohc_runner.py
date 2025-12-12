@@ -261,7 +261,7 @@ def compute_temperature_anomaly_and_ohc(temperature, temperature_reference, mask
     return temperature_anomaly_profile, ocean_heat_content_profile, bottom_depth_index
 
 
-def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_depth,output_path,suffix,start_year=1993):
+def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_depth, output_path, suffix, start_year=1993, box_info=""):
     plt.figure(figsize=(12, 4))
     plt.grid(True)
     
@@ -279,7 +279,7 @@ def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_de
     
     plt.xlabel("Years", fontsize=16)
     plt.ylabel("Temp. anomaly (°C)", fontsize=16)
-    plt.title(f"Temperature anomaly 0-{bottom_depth} m", fontsize=20)
+    plt.title(f"Temperature anomaly 0-{bottom_depth:.0f} m\n{box_info}", fontsize=18)
     plt.legend(fontsize=14)
     
     plt.tick_params(axis='both', which='major', labelsize=16)
@@ -287,11 +287,10 @@ def plot_temperature_anomaly_trend(years, temperature_anomaly_profile, bottom_de
     plt.tight_layout()
     
     plt.savefig(f"{output_path}/temp_anomaly_{suffix}.png", bbox_inches='tight', dpi=200)
-    #plt.show()
     plt.close()
 
 
-def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path,suffix, start_year=1993):
+def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth, output_path, suffix, start_year=1993, box_info=""):
     plt.figure(figsize=(12, 4))
     plt.grid(True)
 
@@ -309,13 +308,12 @@ def plot_ohc_anomaly(years, ocean_heat_content_profile, bottom_depth,output_path
 
     plt.xlabel("Years", fontsize=16)
     plt.ylabel("OHC (J m⁻²)", fontsize=16)
-    plt.title(f"Ocean Heat Content anomaly 0-{bottom_depth} m", fontsize=20)
+    plt.title(f"Ocean Heat Content anomaly 0-{bottom_depth:.0f} m\n{box_info}", fontsize=18)
     plt.legend(fontsize=16)
     plt.tick_params(axis='both', which='major', labelsize=16)
 
     plt.tight_layout()
     plt.savefig(f"{output_path}/ohc_anomaly_{suffix}.png", bbox_inches='tight', dpi=200)
-    #plt.show()
     plt.close()
 
 
@@ -417,6 +415,9 @@ def main():
     except (KeyError, IndexError, json.JSONDecodeError) as e:
         raise ValueError(f"Invalid domain format: {domain}\nError: {e}")
     
+    # Create box info string for plot titles
+    box_info = f"Box: [{lon_min}°, {lat_min}°] to [{lon_max}°, {lat_max}°] | Depth: {depth_min}-{depth_max} m"
+    
     try:
         start_year = int(args.start_date)  # Try as year first
         end_year = int(args.end_date)
@@ -456,10 +457,10 @@ def main():
     if id_output_type == TEMPANOM:
         #plot_temperature_profile(temperature, depthr_subset, selected_years, output_path=outdir, suffix=suffix)
         #avg_temperature_anomaly_plt (temperature,temperature_reference,depthr_subset,output_path=outdir,suffix=suffix)
-        plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr_subset[bottom_depth_index],start_year=start_year, output_path=outdir, suffix=suffix)
+        plot_temperature_anomaly_trend(selected_years, temperature_anomaly_profile, depthr_subset[bottom_depth_index], start_year=start_year, output_path=outdir, suffix=suffix, box_info=box_info)
         save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile,id_output_type)
     elif id_output_type == ANOMALY:
-        plot_ohc_anomaly(selected_years,ocean_heat_content_profile,bottom_depth=depthr_subset[bottom_depth_index],start_year=start_year,output_path=outdir,suffix=suffix)
+        plot_ohc_anomaly(selected_years, ocean_heat_content_profile, bottom_depth=depthr_subset[bottom_depth_index], start_year=start_year, output_path=outdir, suffix=suffix, box_info=box_info)
         save_ohc_temperature_nc(outdir,climatology_bounds,temperature_anomaly_profile,suffix,selected_years,ocean_heat_content_profile,id_output_type)
     else:
         raise ValueError(f"[ERROR] '{id_output_type}' not correct")
