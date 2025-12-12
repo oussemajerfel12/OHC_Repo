@@ -402,10 +402,14 @@ def main():
     except (KeyError, IndexError, json.JSONDecodeError) as e:
         raise ValueError(f"Invalid domain format: {domain}\nError: {e}")
     
-    start_year = datetime.datetime.strptime(args.start_date, "%Y-%m-%d").year
-    end_year = datetime.datetime.strptime(args.end_date, "%Y-%m-%d").year
-
-
+    try:
+        start_year = int(args.start_date)  # Try as year first
+        end_year = int(args.end_date)
+    except ValueError:
+        # Fallback to full date parsing
+        start_year = datetime.datetime.strptime(args.start_date, "%Y-%m-%d").year
+        end_year = datetime.datetime.strptime(args.end_date, "%Y-%m-%d").year
+    print(start_year,end_year)
     mask_file = args.mask_file
     temperature_file = args.temperature_file
     outdir = args.outdir
