@@ -396,6 +396,10 @@ def main():
     parser.add_argument("--start_date", required=True)
     parser.add_argument("--end_date", required=True)
 
+
+    
+    args = parser.parse_args()
+
     mask_file = os.path.join(
         args.data_path, "INPUT", "BATHYMETRY",
         "gebco_2019_mask_1_8_edited_final.nc"
@@ -409,8 +413,6 @@ def main():
     for f in [mask_file, temperature_file]:
         if not os.path.exists(f):
             raise FileNotFoundError(f"Missing input file: {f}")
-    
-    args = parser.parse_args()
     id_output_type = args.id_output_type.lower().strip()
     data_source = json.loads(args.data_source) if args.data_source else []
 
