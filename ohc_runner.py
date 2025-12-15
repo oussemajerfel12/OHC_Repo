@@ -235,13 +235,6 @@ def compute_temperature_anomaly_and_ohc(temperature, temperature_reference, mask
     
     delta_depth_slice = delta_depth[:, :, :bottom_depth_index+1]
     mask_slice = mask[:, :, :bottom_depth_index+1]
-    
-    # delta_depth_4d = delta_depth_slice[:, :, :, np.newaxis]
-    # mask_4d = mask_slice[:, :, :, np.newaxis]
-    
-    # temp_anom_integrand = temperature_anomaly[:, :, :bottom_depth_index+1, :] * delta_depth_4d
-    # temp_anom_integrand = temp_anom_integrand * mask_4d
-    # temp_anom_integrand = np.nan_to_num(temp_anom_integrand, nan=0.0)
     delta_depth_4d = delta_depth_slice[:, :, :, np.newaxis]
     mask_4d = mask_slice[:, :, :, np.newaxis]
 
