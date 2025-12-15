@@ -388,14 +388,27 @@ def fix_json_quotes(s: str):
 def main():
 
     parser = argparse.ArgumentParser(description="Compute Ocean Heat Content and Temperature Anomaly.")
-    parser.add_argument("--mask_file", type=str, required=True)
-    parser.add_argument("--temperature_file", type=str, required=True)
-    parser.add_argument("--working_domain",type=str,required=True)
-    parser.add_argument("--data_source", type=str, required=True)
-    parser.add_argument("--id_output_type", type=str, required=True)
-    parser.add_argument("--outdir", type=str, default="OceanHeatContent")
-    parser.add_argument("--start_date", type=str, required=True)
-    parser.add_argument("--end_date", type=str, required=True)
+    parser.add_argument("--data_path", required=True)
+    parser.add_argument("--working_domain", required=True)
+    parser.add_argument("--data_source", required=True)
+    parser.add_argument("--id_output_type", required=True)
+    parser.add_argument("--outdir", default="OceanHeatContent")
+    parser.add_argument("--start_date", required=True)
+    parser.add_argument("--end_date", required=True)
+
+    mask_file = os.path.join(
+        args.data_path, "INPUT", "BATHYMETRY",
+        "gebco_2019_mask_1_8_edited_final.nc"
+    )
+
+    temperature_file = os.path.join(
+        args.data_path, "INPUT", "CLIMATOLOGY",
+        "Temperature_sliding_climatology_WP.nc"
+    )
+
+    for f in [mask_file, temperature_file]:
+        if not os.path.exists(f):
+            raise FileNotFoundError(f"Missing input file: {f}")
     
     args = parser.parse_args()
     id_output_type = args.id_output_type.lower().strip()
@@ -426,8 +439,7 @@ def main():
         start_year = datetime.datetime.strptime(args.start_date, "%Y-%m-%d").year
         end_year = datetime.datetime.strptime(args.end_date, "%Y-%m-%d").year
     print(start_year,end_year)
-    mask_file = args.mask_file
-    temperature_file = args.temperature_file
+
     outdir = args.outdir
 
     years = np.arange(start_year, end_year + 1)
