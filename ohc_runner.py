@@ -400,6 +400,14 @@ def main():
     
     args = parser.parse_args()
 
+
+    id_output_type = args.id_output_type.lower().strip()
+    data_source = json.loads(args.data_source) if args.data_source else []
+
+    print("\n[STEP] Downloading required datasets from config...")
+    download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
+    print("[INFO] Dataset download completed.\n")
+
     mask_file = os.path.join(
         args.data_path, "INPUT", "BATHYMETRY",
         "gebco_2019_mask_1_8_edited_final.nc"
@@ -413,12 +421,6 @@ def main():
     for f in [mask_file, temperature_file]:
         if not os.path.exists(f):
             raise FileNotFoundError(f"Missing input file: {f}")
-    id_output_type = args.id_output_type.lower().strip()
-    data_source = json.loads(args.data_source) if args.data_source else []
-
-    print("\n[STEP] Downloading required datasets from config...")
-    download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
-    print("[INFO] Dataset download completed.\n")
 
     try:
         print(args.working_domain)
