@@ -38,6 +38,16 @@ t_min = 1960
 t_max = 2014
 
 # ==============================
+# File Mapping Configuration
+# ==============================
+FILE_MAPPING = {
+    "Temperature_sliding_climatology_WP": {
+        "temperature_file": "Temperature_sliding_climatology_WP.nc",
+        "mask_file": "gebco_2019_mask_1_8_edited_final.nc"
+    }
+}
+
+# ==============================
 # Functions
 # ==============================
 
@@ -410,15 +420,31 @@ def main():
     download_datasets(config_path=CONFIG_PATH, base_outdir="/data", data_source=data_source)
     print("[INFO] Dataset download completed.\n")
 
+    # Extract data source name from list format
+    if isinstance(data_source, list) and len(data_source) > 0:
+        data_source_name = data_source[0]
+    else:
+        data_source_name = data_source
+    
+    # Get file mapping for the data source
+    if data_source_name not in FILE_MAPPING:
+        raise ValueError(f"Unknown data_source: {data_source_name}. Available options: {list(FILE_MAPPING.keys())}")
+    
+    file_config = FILE_MAPPING[data_source_name]
+    
     mask_file = os.path.join(
         args.data_path, "INPUT", "BATHYMETRY",
-        "gebco_2019_mask_1_8_edited_final.nc"
+        file_config["mask_file"]
     )
 
     temperature_file = os.path.join(
         args.data_path, "INPUT", "CLIMATOLOGY",
-        "Temperature_sliding_climatology_WP.nc"
+        file_config["temperature_file"]
     )
+
+    print(f"Using data source: {data_source_name}")
+    print(f"Temperature file: {file_config['temperature_file']}")
+    print(f"Mask file: {file_config['mask_file']}")
 
     for f in [mask_file, temperature_file]:
         if not os.path.exists(f):
